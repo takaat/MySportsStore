@@ -13,14 +13,14 @@ struct ContentView: View {
     var body: some View {
         VStack {
             List {
-                ForEach($model.products, id: \ .self.0) { $product in
+                ForEach($model.products, id: \ .self.name) { $product in
                     ListRow(product: $product)
                 }
             }
             .listStyle(.plain)
 
-            Text("\(model.stockTotal) Products in Stock")
-                .font(.title)
+            Text(model.displayStockTotal)
+                .font(.headline)
                 .monospacedDigit()
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -41,12 +41,15 @@ struct ContentView_Previews: PreviewProvider {
 }
 
 struct ListRow: View {
-    @Binding var product: (String, String, String, Double, Int)
+    @Binding var product: Product
+    private let logger = Logger { (product: Product) -> Void in
+        print("Change: \(product.name) \(product.stockLevel) items in stock")
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text(product.0)
+                Text(product.name)
                     .font(.title2)
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -54,14 +57,14 @@ struct ListRow: View {
                 Spacer()
 
                 Stepper("") {
-                    product.4 += 1
+                    product.stockLevel += 1
                 } onDecrement: {
-                    product.4 -= 1
+                    product.stockLevel -= 1
                 }
 
                 TextField(
                     "",
-                    value: $product.4,
+                    value: $product.stockLevel,
                     format: .number
                 )
                 .font(.title2)
@@ -71,9 +74,12 @@ struct ListRow: View {
                 .frame(width: 50)
             }
 
-            Text(product.1)
+            Text(product.description)
                 .lineLimit(1)
 
+        }
+        .onChange(of: product) { newProduct in
+            logger.logItem(item: newProduct)
         }
     }
 }
@@ -84,7 +90,7 @@ struct ListRow_Previews: PreviewProvider {
             .padding(.horizontal)
     }
 
-    static var sampleProduct: (String, String, String, Double, Int) {
-        ("Kayak", "A boat for one person", "Watersports", 275.0, 10)
+    static var sampleProduct: Product {
+        Product(name:"Kayak", description:"A boat for one person", category:"Watersports", price:275.0, stockLevel:10)
     }
 }
